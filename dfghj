@@ -1,0 +1,939 @@
+-- Меню с модульной системой + Анти-обнаружение + Аимбот + Hitbox Expander (только голова)
+local Players = game:GetService("Players")
+local Player = Players.LocalPlayer
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+local Menu = {
+    Systems = {},
+    Containers = {},
+    Tabs = {},
+}
+
+-- ============ АНТИ-ОБНАРУЖЕНИЕ ============
+local AntiDetect = {}
+
+function AntiDetect:ProtectGui(gui)
+    pcall(function()
+        if syn and syn.protect_gui then
+            syn.protect_gui(gui)
+        end
+        if gethui then
+            gui.Parent = gethui()
+        end
+    end)
+end
+
+function AntiDetect:RandomizeGuiName(gui)
+    local chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    local name = ""
+    for i = 1, 15 do
+        name = name .. chars:sub(math.random(1, #chars), math.random(1, #chars))
+    end
+    gui.Name = name
+end
+
+function AntiDetect:AntiAFK()
+    -- Отключено
+end
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "SimpleMenu"
+ScreenGui.Parent = Player:WaitForChild("PlayerGui")
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Global
+ScreenGui.DisplayOrder = 999999
+
+AntiDetect:ProtectGui(ScreenGui)
+AntiDetect:RandomizeGuiName(ScreenGui)
+AntiDetect:AntiAFK()
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 400, 0, 500)
+MainFrame.Position = UDim2.new(0.5, -200, 0.5, -250)
+MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+MainFrame.BorderSizePixel = 0
+MainFrame.ZIndex = 999999
+MainFrame.Visible = false
+MainFrame.Parent = ScreenGui
+
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 15)
+UICorner.Parent = MainFrame
+
+local Header = Instance.new("Frame")
+Header.Size = UDim2.new(1, 0, 0, 45)
+Header.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+Header.BorderSizePixel = 0
+Header.ZIndex = 1000000
+Header.Parent = MainFrame
+
+local HeaderCorner = Instance.new("UICorner")
+HeaderCorner.CornerRadius = UDim.new(0, 15)
+HeaderCorner.Parent = Header
+
+local HeaderFill = Instance.new("Frame")
+HeaderFill.Size = UDim2.new(1, 0, 0, 22)
+HeaderFill.Position = UDim2.new(0, 0, 0, 23)
+HeaderFill.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+HeaderFill.BorderSizePixel = 0
+HeaderFill.ZIndex = 1000000
+HeaderFill.Parent = Header
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, -130, 1, 0)
+Title.Position = UDim2.new(0, 15, 0, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "Меню"
+Title.TextColor3 = Color3.fromRGB(200, 200, 200)
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 18
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.ZIndex = 1000001
+Title.Parent = Header
+
+local KillButton = Instance.new("TextButton")
+KillButton.Size = UDim2.new(0, 60, 0, 30)
+KillButton.Position = UDim2.new(1, -120, 0, 8)
+KillButton.BackgroundColor3 = Color3.fromRGB(120, 40, 40)
+KillButton.BorderSizePixel = 0
+KillButton.Text = "KILL"
+KillButton.TextColor3 = Color3.fromRGB(220, 220, 220)
+KillButton.Font = Enum.Font.GothamBold
+KillButton.TextSize = 13
+KillButton.AutoButtonColor = false
+KillButton.ZIndex = 1000002
+KillButton.Parent = Header
+
+local KillCorner = Instance.new("UICorner")
+KillCorner.CornerRadius = UDim.new(0, 15)
+KillCorner.Parent = KillButton
+
+local CloseButton = Instance.new("TextButton")
+CloseButton.Size = UDim2.new(0, 35, 0, 30)
+CloseButton.Position = UDim2.new(1, -50, 0, 8)
+CloseButton.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
+CloseButton.BorderSizePixel = 0
+CloseButton.Text = "X"
+CloseButton.TextColor3 = Color3.fromRGB(200, 200, 200)
+CloseButton.Font = Enum.Font.GothamBold
+CloseButton.TextSize = 16
+CloseButton.AutoButtonColor = false
+CloseButton.ZIndex = 1000002
+CloseButton.Parent = Header
+
+local CloseCorner = Instance.new("UICorner")
+CloseCorner.CornerRadius = UDim.new(0, 15)
+CloseCorner.Parent = CloseButton
+
+local TabPanel = Instance.new("Frame")
+TabPanel.Size = UDim2.new(1, 0, 0, 45)
+TabPanel.Position = UDim2.new(0, 0, 0, 45)
+TabPanel.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+TabPanel.BorderSizePixel = 0
+TabPanel.ZIndex = 1000000
+TabPanel.Parent = MainFrame
+
+local function Rounded(parent, radius)
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, radius or 10)
+    corner.Parent = parent
+    return corner
+end
+
+function Menu:CreateTab(name)
+    local container = Instance.new("ScrollingFrame")
+    container.Size = UDim2.new(1, -30, 1, -105)
+    container.Position = UDim2.new(0, 15, 0, 95)
+    container.BackgroundTransparency = 1
+    container.BorderSizePixel = 0
+    container.ZIndex = 1000000
+    container.Parent = MainFrame
+    container.ScrollingDirection = Enum.ScrollingDirection.Y
+    container.ScrollBarThickness = 4
+    container.ScrollBarImageColor3 = Color3.fromRGB(80, 80, 90)
+    container.CanvasSize = UDim2.new(0, 0, 0, 0)
+    container.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    container.Visible = false
+    
+    local tabBtn = Instance.new("TextButton")
+    tabBtn.Size = UDim2.new(1 / math.max(#self.Tabs + 1, 1), -3, 1, -6)
+    tabBtn.Position = UDim2.new(#self.Tabs / math.max(#self.Tabs + 1, 1), 0, 0, 3)
+    tabBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
+    tabBtn.BorderSizePixel = 0
+    tabBtn.Text = name
+    tabBtn.TextColor3 = Color3.fromRGB(150, 150, 150)
+    tabBtn.Font = Enum.Font.GothamBold
+    tabBtn.TextSize = 15
+    tabBtn.AutoButtonColor = false
+    tabBtn.ZIndex = 1000001
+    tabBtn.Parent = TabPanel
+    
+    Rounded(tabBtn, 15)
+    
+    tabBtn.MouseButton1Click:Connect(function()
+        for _, cont in pairs(self.Containers) do
+            cont.Visible = false
+        end
+        container.Visible = true
+        
+        for _, tab in pairs(self.Tabs) do
+            tab.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
+            tab.TextColor3 = Color3.fromRGB(150, 150, 150)
+        end
+        tabBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 80)
+        tabBtn.TextColor3 = Color3.fromRGB(220, 220, 220)
+    end)
+    
+    table.insert(self.Tabs, tabBtn)
+    self.Containers[name] = container
+    
+    local count = #self.Tabs
+    for i, tab in pairs(self.Tabs) do
+        tab.Size = UDim2.new(1 / count, -3, 1, -6)
+        tab.Position = UDim2.new((i - 1) / count, 0, 0, 3)
+    end
+    
+    if #self.Tabs == 1 then
+        container.Visible = true
+        tabBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 80)
+        tabBtn.TextColor3 = Color3.fromRGB(220, 220, 220)
+    end
+    
+    return container
+end
+
+function Menu:CreateToggle(container, yPos, labelText, default, callback)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, 0, 0, 55)
+    frame.Position = UDim2.new(0, 0, 0, yPos)
+    frame.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
+    frame.BorderSizePixel = 0
+    frame.ZIndex = 1000001
+    frame.Parent = container
+    
+    Rounded(frame, 12)
+    
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0.6, 0, 1, 0)
+    label.Position = UDim2.new(0, 15, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Text = labelText
+    label.TextColor3 = Color3.fromRGB(200, 200, 200)
+    label.Font = Enum.Font.Gotham
+    label.TextSize = 15
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.ZIndex = 1000002
+    label.Parent = frame
+    
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, 55, 0, 28)
+    btn.Position = UDim2.new(0.85, 0, 0.5, -14)
+    btn.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+    btn.BorderSizePixel = 0
+    btn.Text = ""
+    btn.AutoButtonColor = false
+    btn.ZIndex = 1000002
+    btn.Parent = frame
+    
+    Rounded(btn, 14)
+    
+    local knob = Instance.new("Frame")
+    knob.Size = UDim2.new(0, 20, 0, 20)
+    knob.Position = UDim2.new(0, default and 31 or 4, 0.5, -10)
+    knob.BackgroundColor3 = Color3.fromRGB(default and 255 or 150, default and 255 or 150, default and 255 or 150)
+    knob.BorderSizePixel = 0
+    knob.ZIndex = 1000003
+    knob.Parent = btn
+    
+    Rounded(knob, 10)
+    
+    if default then
+        btn.BackgroundColor3 = Color3.fromRGB(80, 80, 90)
+    end
+    
+    local isEnabled = default or false
+    
+    btn.MouseButton1Click:Connect(function()
+        isEnabled = not isEnabled
+        if isEnabled then
+            btn.BackgroundColor3 = Color3.fromRGB(80, 80, 90)
+            knob.Position = UDim2.new(0, 31, 0.5, -10)
+            knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        else
+            btn.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+            knob.Position = UDim2.new(0, 4, 0.5, -10)
+            knob.BackgroundColor3 = Color3.fromRGB(150, 150, 150)
+        end
+        if callback then callback(isEnabled) end
+    end)
+end
+
+function Menu:CreateSlider(container, yPos, labelText, min, max, default, callback)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, 0, 0, 70)
+    frame.Position = UDim2.new(0, 0, 0, yPos)
+    frame.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
+    frame.BorderSizePixel = 0
+    frame.ZIndex = 1000001
+    frame.Parent = container
+    
+    Rounded(frame, 12)
+    
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, -20, 0, 25)
+    label.Position = UDim2.new(0, 15, 0, 5)
+    label.BackgroundTransparency = 1
+    label.Text = labelText .. ": " .. default
+    label.TextColor3 = Color3.fromRGB(200, 200, 200)
+    label.Font = Enum.Font.Gotham
+    label.TextSize = 14
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.ZIndex = 1000002
+    label.Parent = frame
+    
+    local sliderBtn = Instance.new("TextButton")
+    sliderBtn.Size = UDim2.new(1, -30, 0, 25)
+    sliderBtn.Position = UDim2.new(0, 15, 0, 35)
+    sliderBtn.BackgroundTransparency = 1
+    sliderBtn.BorderSizePixel = 0
+    sliderBtn.Text = ""
+    sliderBtn.AutoButtonColor = false
+    sliderBtn.ZIndex = 1000002
+    sliderBtn.Parent = frame
+    
+    local bg = Instance.new("Frame")
+    bg.Size = UDim2.new(1, 0, 0, 5)
+    bg.Position = UDim2.new(0, 0, 0.5, -2)
+    bg.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+    bg.BorderSizePixel = 0
+    bg.ZIndex = 1000003
+    bg.Parent = sliderBtn
+    
+    Rounded(bg, 3)
+    
+    local fill = Instance.new("Frame")
+    local percent = (default - min) / (max - min)
+    fill.Size = UDim2.new(percent, 0, 1, 0)
+    fill.BackgroundColor3 = Color3.fromRGB(180, 180, 180)
+    fill.BorderSizePixel = 0
+    fill.ZIndex = 1000004
+    fill.Parent = bg
+    
+    Rounded(fill, 3)
+    
+    local knob = Instance.new("Frame")
+    knob.Size = UDim2.new(0, 14, 0, 14)
+    knob.Position = UDim2.new(percent, -7, 0.5, -7)
+    knob.BackgroundColor3 = Color3.fromRGB(220, 220, 220)
+    knob.BorderSizePixel = 0
+    knob.ZIndex = 1000005
+    knob.Parent = bg
+    
+    Rounded(knob, 7)
+    
+    local dragging = false
+    
+    local function updateValue(inputX)
+        local absX = sliderBtn.AbsolutePosition.X
+        local width = sliderBtn.AbsoluteSize.X
+        local p = math.clamp((inputX - absX) / width, 0, 1)
+        local value = math.floor(min + (max - min) * p + 0.5)
+        fill.Size = UDim2.new(p, 0, 1, 0)
+        knob.Position = UDim2.new(p, -7, 0.5, -7)
+        label.Text = labelText .. ": " .. value
+        if callback then callback(value) end
+    end
+    
+    sliderBtn.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            updateValue(input.Position.X)
+        end
+    end)
+    
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
+        end
+    end)
+    
+    RunService.RenderStepped:Connect(function()
+        if dragging then
+            updateValue(UserInputService:GetMouseLocation().X)
+        end
+    end)
+end
+
+function Menu:CreateColorButton(container, yPos, labelText, colors, defaultColor, callback)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, 0, 0, 55)
+    frame.Position = UDim2.new(0, 0, 0, yPos)
+    frame.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
+    frame.BorderSizePixel = 0
+    frame.ZIndex = 1000001
+    frame.Parent = container
+    
+    Rounded(frame, 12)
+    
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0.5, 0, 1, 0)
+    label.Position = UDim2.new(0, 15, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Text = labelText
+    label.TextColor3 = Color3.fromRGB(200, 200, 200)
+    label.Font = Enum.Font.Gotham
+    label.TextSize = 15
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.ZIndex = 1000002
+    label.Parent = frame
+    
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, 80, 0, 30)
+    btn.Position = UDim2.new(0.7, 0, 0.5, -15)
+    btn.BackgroundColor3 = defaultColor
+    btn.BorderSizePixel = 0
+    btn.Text = ""
+    btn.AutoButtonColor = false
+    btn.ZIndex = 1000002
+    btn.Parent = frame
+    
+    Rounded(btn, 15)
+    
+    local colorIndex = 1
+    for i, c in pairs(colors) do
+        if c == defaultColor then colorIndex = i break end
+    end
+    
+    btn.MouseButton1Click:Connect(function()
+        colorIndex = colorIndex + 1
+        if colorIndex > #colors then colorIndex = 1 end
+        btn.BackgroundColor3 = colors[colorIndex]
+        if callback then callback(colors[colorIndex]) end
+    end)
+end
+
+function Menu:CreateBindButton(container, yPos, labelText, defaultKey, callback)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, 0, 0, 55)
+    frame.Position = UDim2.new(0, 0, 0, yPos)
+    frame.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
+    frame.BorderSizePixel = 0
+    frame.ZIndex = 1000001
+    frame.Parent = container
+    
+    Rounded(frame, 12)
+    
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0.5, 0, 1, 0)
+    label.Position = UDim2.new(0, 15, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Text = labelText
+    label.TextColor3 = Color3.fromRGB(200, 200, 200)
+    label.Font = Enum.Font.Gotham
+    label.TextSize = 15
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.ZIndex = 1000002
+    label.Parent = frame
+    
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, 100, 0, 30)
+    btn.Position = UDim2.new(0.7, 0, 0.5, -15)
+    btn.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+    btn.BorderSizePixel = 0
+    btn.Text = defaultKey.Name
+    btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 13
+    btn.AutoButtonColor = false
+    btn.ZIndex = 1000002
+    btn.Parent = frame
+    
+    Rounded(btn, 15)
+    
+    local waiting = false
+    
+    btn.MouseButton1Click:Connect(function()
+        waiting = true
+        btn.Text = "..."
+    end)
+    
+    UserInputService.InputBegan:Connect(function(input)
+        if waiting and input.UserInputType == Enum.UserInputType.Keyboard then
+            waiting = false
+            btn.Text = input.KeyCode.Name
+            if callback then callback(input.KeyCode) end
+        end
+    end)
+end
+
+-- ============ ESP SYSTEM ============
+-- ============ ESP SYSTEM (ИСПРАВЛЕНО) ============
+local ESP = {
+    Enabled = false,
+    Highlights = {},
+    Connections = {},
+    Color = Color3.fromRGB(255, 0, 0),
+    CharacterWatchers = {}, -- Отслеживание возрождения
+}
+
+function ESP:AddChams(player)
+    if player == Player then return end
+    self:RemoveChams(player)
+    local char = player.Character
+    if not char then return end
+    local hum = char:FindFirstChild("Humanoid")
+    if hum and hum.Health <= 0 then return end
+    
+    local hl = Instance.new("Highlight")
+    hl.FillColor = self.Color
+    hl.OutlineColor = Color3.fromRGB(255, 255, 255)
+    hl.FillTransparency = 0.3
+    hl.Parent = char
+    self.Highlights[player] = hl
+    
+    if hum then
+        local conn = hum.Died:Connect(function()
+            self:RemoveChams(player)
+            conn:Disconnect()
+        end)
+        table.insert(self.Connections, conn)
+    end
+end
+
+function ESP:RemoveChams(player)
+    if self.Highlights[player] then
+        self.Highlights[player]:Destroy()
+        self.Highlights[player] = nil
+    end
+end
+
+function ESP:WatchCharacter(player)
+    if player == Player then return end
+    
+    -- Отключаем старый вотчер если есть
+    if self.CharacterWatchers[player] then
+        self.CharacterWatchers[player]:Disconnect()
+        self.CharacterWatchers[player] = nil
+    end
+    
+    -- Отслеживаем возрождение
+    self.CharacterWatchers[player] = player.CharacterAdded:Connect(function(newChar)
+        task.wait(0.5)
+        if self.Enabled then
+            self:AddChams(player)
+        end
+    end)
+end
+
+function ESP:Enable()
+    if self.Enabled then return end
+    self.Enabled = true
+    
+    -- Добавляем ESP для текущих игроков
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= Player then
+            self:AddChams(p)
+            self:WatchCharacter(p)
+        end
+    end
+    
+    -- Отслеживаем новых игроков
+    local playerAddedConn = Players.PlayerAdded:Connect(function(p)
+        if self.Enabled and p ~= Player then
+            self:AddChams(p)
+            self:WatchCharacter(p)
+        end
+    end)
+    table.insert(self.Connections, playerAddedConn)
+    
+    -- Отслеживаем удаление игроков
+    local playerRemovingConn = Players.PlayerRemoving:Connect(function(p)
+        self:RemoveChams(p)
+        if self.CharacterWatchers[p] then
+            self.CharacterWatchers[p]:Disconnect()
+            self.CharacterWatchers[p] = nil
+        end
+    end)
+    table.insert(self.Connections, playerRemovingConn)
+end
+
+function ESP:Disable()
+    if not self.Enabled then return end
+    self.Enabled = false
+    
+    -- Отключаем все соединения
+    for _, c in pairs(self.Connections) do c:Disconnect() end
+    self.Connections = {}
+    
+    -- Отключаем все вотчеры
+    for p, watcher in pairs(self.CharacterWatchers) do
+        if watcher then watcher:Disconnect() end
+    end
+    self.CharacterWatchers = {}
+    
+    -- Удаляем все чамсы
+    for p, hl in pairs(self.Highlights) do
+        if hl then hl:Destroy() end
+    end
+    self.Highlights = {}
+end
+
+function ESP:SetColor(c)
+    self.Color = c
+    for _, hl in pairs(self.Highlights) do
+        if hl then hl.FillColor = c end
+    end
+end
+
+-- ============ HITBOX EXPANDER (только голова) ============
+local HitboxExpander = {
+    Enabled = false,
+    OriginalSizes = {},
+    Connections = {},
+    SizeMultiplier = 2.5,
+}
+
+function HitboxExpander:ExpandHead(player)
+    if player == Player then return end
+    local char = player.Character
+    if not char then return end
+    
+    local head = char:FindFirstChild("Head")
+    if not head then return end
+    
+    if not self.OriginalSizes[head] then
+        self.OriginalSizes[head] = head.Size
+    end
+    
+    head.Size = self.OriginalSizes[head] * Vector3.new(self.SizeMultiplier, self.SizeMultiplier, self.SizeMultiplier)
+end
+
+function HitboxExpander:RestoreHead(player)
+    local char = player.Character
+    if not char then return end
+    
+    local head = char:FindFirstChild("Head")
+    if not head then return end
+    
+    if self.OriginalSizes[head] then
+        head.Size = self.OriginalSizes[head]
+        self.OriginalSizes[head] = nil
+    end
+end
+
+function HitboxExpander:SetSize(multiplier)
+    self.SizeMultiplier = multiplier
+    if self.Enabled then
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= Player then
+                local char = p.Character
+                if char then
+                    local head = char:FindFirstChild("Head")
+                    if head and self.OriginalSizes[head] then
+                        head.Size = self.OriginalSizes[head] * Vector3.new(multiplier, multiplier, multiplier)
+                    end
+                end
+            end
+        end
+    end
+end
+
+function HitboxExpander:Enable()
+    if self.Enabled then return end
+    self.Enabled = true
+    print("Hitbox Expander включен")
+    
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= Player then
+            self:ExpandHead(p)
+        end
+    end
+    
+    table.insert(self.Connections, Players.PlayerAdded:Connect(function(p)
+        if self.Enabled and p ~= Player then
+            p.CharacterAdded:Connect(function()
+                task.wait(0.5)
+                if self.Enabled then
+                    self:ExpandHead(p)
+                end
+            end)
+            if p.Character then
+                self:ExpandHead(p)
+            end
+        end
+    end))
+    
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= Player then
+            table.insert(self.Connections, p.CharacterAdded:Connect(function()
+                task.wait(0.5)
+                if self.Enabled then
+                    self:ExpandHead(p)
+                end
+            end))
+        end
+    end
+    
+    table.insert(self.Connections, Players.PlayerRemoving:Connect(function(p)
+        self:RestoreHead(p)
+    end))
+end
+
+function HitboxExpander:Disable()
+    if not self.Enabled then return end
+    self.Enabled = false
+    print("Hitbox Expander выключен")
+    
+    for _, c in pairs(self.Connections) do
+        c:Disconnect()
+    end
+    self.Connections = {}
+    
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= Player then
+            self:RestoreHead(p)
+        end
+    end
+    
+    self.OriginalSizes = {}
+end
+
+-- ============ AIMBOT SYSTEM ============
+local Aimbot = {
+    Enabled = false,
+    FOV = 60,
+    FOVCircle = nil,
+    Connection = nil,
+    Smoothness = 35,
+    AimKey = Enum.KeyCode.E,
+}
+
+local function IsVisible(target)
+    local char = Player.Character
+    if not char then return false end
+    local head = char:FindFirstChild("Head")
+    if not head then return false end
+    local targetHead = target:FindFirstChild("Head")
+    if not targetHead then return false end
+    
+    local params = RaycastParams.new()
+    params.FilterDescendantsInstances = {char}
+    params.FilterType = Enum.RaycastFilterType.Blacklist
+    local dir = (targetHead.Position - head.Position).Unit
+    local dist = (targetHead.Position - head.Position).Magnitude
+    local result = workspace:Raycast(head.Position, dir * dist, params)
+    
+    if result then
+        local model = result.Instance:FindFirstAncestorOfClass("Model")
+        return model and model == target or false
+    end
+    return true
+end
+
+local function FindTarget()
+    local char = Player.Character
+    if not char then return nil end
+    local cam = workspace.CurrentCamera
+    if not cam then return nil end
+    
+    local center = Vector2.new(cam.ViewportSize.X / 2, cam.ViewportSize.Y / 2)
+    local fovRadius = (Aimbot.FOV / 2) * (cam.ViewportSize.Y / 1080) * 5
+    local targets = {}
+    
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= Player then
+            local targetChar = p.Character
+            if targetChar then
+                local hum = targetChar:FindFirstChild("Humanoid")
+                if hum and hum.Health > 0 then
+                    local targetHead = targetChar:FindFirstChild("Head")
+                    if targetHead and IsVisible(targetChar) then
+                        local sp = cam:WorldToScreenPoint(targetHead.Position)
+                        if sp.Z > 0 then
+                            local distFromCenter = (Vector2.new(sp.X, sp.Y) - center).Magnitude
+                            if distFromCenter <= fovRadius then
+                                local root = char:FindFirstChild("HumanoidRootPart")
+                                local targetRoot = targetChar:FindFirstChild("HumanoidRootPart")
+                                if root and targetRoot then
+                                    table.insert(targets, {
+                                        Head = targetHead,
+                                        Distance = (root.Position - targetRoot.Position).Magnitude,
+                                    })
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    
+    table.sort(targets, function(a, b) return a.Distance < b.Distance end)
+    return #targets > 0 and targets[1].Head or nil
+end
+
+function Aimbot:CreateFOVCircle()
+    if self.FOVCircle then self.FOVCircle:Destroy() end
+    
+    local gui = Instance.new("ScreenGui")
+    gui.Name = "FOVCircle"
+    gui.Parent = Player:WaitForChild("PlayerGui")
+    gui.ResetOnSpawn = false
+    gui.ZIndexBehavior = Enum.ZIndexBehavior.Global
+    gui.DisplayOrder = 999998
+    gui.IgnoreGuiInset = true
+    
+    local cam = workspace.CurrentCamera
+    local radius = (self.FOV / 2) * (cam.ViewportSize.Y / 1080) * 5
+    
+    local circle = Instance.new("Frame")
+    circle.AnchorPoint = Vector2.new(0.5, 0.5)
+    circle.Size = UDim2.new(0, radius * 2, 0, radius * 2)
+    circle.Position = UDim2.new(0.5, 0, 0.5, 0)
+    circle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    circle.BackgroundTransparency = 0.85
+    circle.BorderSizePixel = 0
+    circle.ZIndex = 999999
+    circle.Parent = gui
+    
+    Rounded(circle, radius)
+    
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.fromRGB(255, 255, 255)
+    stroke.Thickness = 1
+    stroke.Transparency = 0.3
+    stroke.Parent = circle
+    
+    self.FOVCircle = gui
+end
+
+function Aimbot:Enable()
+    if self.Enabled then return end
+    self.Enabled = true
+    print("Aimbot включен")
+    self:CreateFOVCircle()
+    
+    self.Connection = RunService.RenderStepped:Connect(function()
+        if not UserInputService:IsKeyDown(self.AimKey) then return end
+        
+        local target = FindTarget()
+        if target then
+            local cam = workspace.CurrentCamera
+            if cam then
+                local lookAt = CFrame.lookAt(cam.CFrame.Position, target.Position)
+                cam.CFrame = cam.CFrame:Lerp(lookAt, self.Smoothness / 100)
+            end
+        end
+    end)
+end
+
+function Aimbot:Disable()
+    if not self.Enabled then return end
+    self.Enabled = false
+    print("Aimbot выключен")
+    if self.Connection then self.Connection:Disconnect() self.Connection = nil end
+    if self.FOVCircle then self.FOVCircle:Destroy() self.FOVCircle = nil end
+end
+
+-- ============ РЕГИСТРАЦИЯ ВКЛАДОК ============
+
+local ESPTab = Menu:CreateTab("ESP")
+Menu:CreateToggle(ESPTab, 5, "Включить ESP", false, function(enabled)
+    if enabled then ESP:Enable() else ESP:Disable() end
+end)
+
+local colors = {
+    Color3.fromRGB(255, 0, 0),
+    Color3.fromRGB(0, 0, 255),
+    Color3.fromRGB(0, 255, 0),
+    Color3.fromRGB(255, 255, 0),
+}
+
+Menu:CreateColorButton(ESPTab, 65, "Цвет ESP", colors, colors[1], function(color)
+    ESP:SetColor(color)
+end)
+
+local AimbotTab = Menu:CreateTab("AIMBOT")
+Menu:CreateToggle(AimbotTab, 5, "Включить Aimbot", false, function(enabled)
+    if enabled then Aimbot:Enable() else Aimbot:Disable() end
+end)
+
+Menu:CreateBindButton(AimbotTab, 65, "Клавиша аима", Aimbot.AimKey, function(key)
+    Aimbot.AimKey = key
+    print("Клавиша аима: " .. key.Name)
+end)
+
+Menu:CreateSlider(AimbotTab, 125, "FOV", 20, 200, 60, function(value)
+    Aimbot.FOV = value
+    if Aimbot.Enabled then Aimbot:CreateFOVCircle() end
+end)
+
+Menu:CreateSlider(AimbotTab, 200, "Скорость", 1, 100, 35, function(value)
+    Aimbot.Smoothness = value
+end)
+
+local HitboxTab = Menu:CreateTab("HITBOX")
+Menu:CreateToggle(HitboxTab, 5, "Включить Hitbox", false, function(enabled)
+    if enabled then 
+        HitboxExpander:Enable() 
+    else 
+        HitboxExpander:Disable() 
+    end
+end)
+
+Menu:CreateSlider(HitboxTab, 65, "Размер головы", 1, 10, 2.5, function(value)
+    HitboxExpander:SetSize(value / 2)
+end)
+
+KillButton.MouseButton1Click:Connect(function()
+    ESP:Disable()
+    Aimbot:Disable()
+    HitboxExpander:Disable()
+    ScreenGui:Destroy()
+end)
+
+CloseButton.MouseButton1Click:Connect(function()
+    MainFrame.Visible = false
+end)
+
+local dragging = false
+local dragOffset = Vector2.new(0, 0)
+local lastPosition = nil
+
+Header.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        lastPosition = input.Position
+        dragOffset = Vector2.new(input.Position.X - MainFrame.AbsolutePosition.X, input.Position.Y - MainFrame.AbsolutePosition.Y)
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = false
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if dragging and lastPosition and input.UserInputType == Enum.UserInputType.MouseMovement then
+        lastPosition = input.Position
+    end
+end)
+
+RunService.RenderStepped:Connect(function()
+    if dragging and lastPosition then
+        MainFrame.Position = UDim2.new(0, lastPosition.X - dragOffset.X, 0, lastPosition.Y - dragOffset.Y)
+    end
+end)
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == Enum.KeyCode.Insert then
+        if ScreenGui and ScreenGui.Parent then
+            MainFrame.Visible = not MainFrame.Visible
+        end
+    end
+end)
+
+print("Меню готово! Нажми Insert")
