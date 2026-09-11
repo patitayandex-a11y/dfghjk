@@ -1,3 +1,6 @@
+-- Меню с модульной системой + Анти-обнаружение + Аимбот + Hitbox Expander (только голова)
+-- ИСПРАВЛЕНО: ESP через workspace, респавн-вотчеры, сброс хитбоксов по игроку, восстановление камеры
+
 local Players = game:GetService("Players")
 local Player = Players.LocalPlayer
 local UserInputService = game:GetService("UserInputService")
@@ -666,7 +669,6 @@ function HitboxExpander:Disable()
 
     self.OriginalSizes = {}
 end
-
 -- ============ AIMBOT SYSTEM (ИСПРАВЛЕНО) ============
 local Aimbot = {
     Enabled = false,
@@ -857,4 +859,76 @@ Menu:CreateSlider(AimbotTab, 200, "Скорость", 1, 100, 35, function(value
 end)
 
 local HitboxTab = Menu:CreateTab("HITBOX")
-Menu:CreateToggle(HitboxTab, 5, "Вклю
+Menu:CreateToggle(HitboxTab, 5, "Включить Hitbox", false, function(enabled)
+    if enabled then
+        HitboxExpander:Enable()
+    else
+        HitboxExpander:Disable()
+    end
+end)
+
+Menu:CreateSlider(HitboxTab, 65, "Размер головы", 1, 10, 2.5, function(value)
+    HitboxExpander:SetSize(value)
+end)
+
+-- ============ ОБРАБОТЧИКИ КНОПОК ============
+
+KillButton.MouseButton1Click:Connect(function()
+    pcall(function() ESP:Disable() end)
+    pcall(function() Aimbot:Disable() end)
+    pcall(function() HitboxExpander:Disable() end)
+    if ScreenGui then ScreenGui:Destroy() end
+    print("Меню уничтожено")
+end)
+
+CloseButton.MouseButton1Click:Connect(function()
+    MainFrame.Visible = false
+end)
+
+-- ============ ПЕРЕТАСКИВАНИЕ ОКНА ============
+
+local dragging = false
+local dragOffset = Vector2.new(0, 0)
+local lastPosition = nil
+
+Header.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        lastPosition = input.Position
+        dragOffset = Vector2.new(
+            input.Position.X - MainFrame.AbsolutePosition.X,
+            input.Position.Y - MainFrame.AbsolutePosition.Y
+        )
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = false
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if dragging and lastPosition and input.UserInputType == Enum.UserInputType.MouseMovement then
+        lastPosition = input.Position
+    end
+end)
+
+RunService.RenderStepped:Connect(function()
+    if dragging and lastPosition then
+        MainFrame.Position = UDim2.new(0, lastPosition.X - dragOffset.X, 0, lastPosition.Y - dragOffset.Y)
+    end
+end)
+
+-- ============ ОТКРЫТИЕ ПО INSERT ============
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == Enum.KeyCode.Insert then
+        if ScreenGui and ScreenGui.Parent then
+            MainFrame.Visible = not MainFrame.Visible
+        end
+    end
+end)
+
+print("Меню готово! Нажми Insert")
