@@ -1,6 +1,6 @@
 -- Меню с модульной системой + Анти-обнаружение + Аимбот + Hitbox Expander (только голова)
 -- ИСПРАВЛЕНО: ESP через workspace, респавн-вотчеры, сброс хитбоксов по игроку, восстановление камеры
--- ДОБАВЛЕНО: фантомный круг-индикатор хитбокса, лимит слайдера 5x
+-- УБРАНО: фантомный круг-индикатор хитбокса
 
 local Players = game:GetService("Players")
 local Player = Players.LocalPlayer
@@ -577,96 +577,13 @@ function ESP:SetColor(c)
     end
 end
 
--- ============ HITBOX EXPANDER (С ФАНТОМНЫМ КРУГОМ) ============
+-- ============ HITBOX EXPANDER ============
 local HitboxExpander = {
     Enabled = false,
     OriginalSizes = {},
     Connections = {},
     SizeMultiplier = 2.5,
-    Indicators = {},       -- [player] = BillboardGui
-    IndicatorConns = {},   -- [player] = RenderStepped connection
 }
-
--- Функция обновления цвета круга по размеру
-local function GetIndicatorColor(mult)
-    if mult <= 3 then
-        return Color3.fromRGB(80, 255, 120)  -- зелёный
-    elseif mult <= 6 then
-        return Color3.fromRGB(255, 220, 80)  -- жёлтый
-    else
-        return Color3.fromRGB(255, 80, 80)   -- красный
-    end
-end
-
--- Создание фантомного круга
-function HitboxExpander:CreateIndicator(player)
-    self:RemoveIndicator(player)
-    local char = player.Character
-    if not char then return end
-    local head = char:FindFirstChild("Head")
-    if not head then return end
-
-    local bb = Instance.new("BillboardGui")
-    bb.Name = "HitboxIndicator"
-    bb.Adornee = head
-    bb.Size = UDim2.new(0, 100, 0, 100)
-    bb.AlwaysOnTop = true
-    bb.LightInfluence = 0
-    bb.MaxDistance = 500
-    bb.Parent = Player:WaitForChild("PlayerGui")
-
-    local circle = Instance.new("Frame")
-    circle.Name = "Circle"
-    circle.AnchorPoint = Vector2.new(0.5, 0.5)
-    circle.Position = UDim2.new(0.5, 0, 0.5, 0)
-    circle.Size = UDim2.new(1, 0, 1, 0)
-    circle.BackgroundTransparency = 1
-    circle.Parent = bb
-
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(1, 0)
-    corner.Parent = circle
-
-    local stroke = Instance.new("UIStroke")
-    stroke.Name = "Stroke"
-    stroke.Color = GetIndicatorColor(self.SizeMultiplier)
-    stroke.Thickness = 2
-    stroke.Transparency = 0.2
-    stroke.Parent = circle
-
-    self.Indicators[player] = bb
-
-    -- Обновляем размер круга каждый кадр, чтобы он соответствовал размеру головы
-    local conn = RunService.RenderStepped:Connect(function()
-        if not self.Enabled then return end
-        if not bb or not bb.Parent then return end
-        local curChar = player.Character
-        if not curChar then return end
-        local curHead = curChar:FindFirstChild("Head")
-        if not curHead then return end
-
-        local origSize = self.OriginalSizes[player] or Vector3.new(2, 1, 1)
-        local currentSize = curHead.Size
-        -- Соотношение текущего размера к оригинальному
-        local ratio = (currentSize.X / math.max(origSize.X, 0.01))
-        -- Размер круга в пикселях: базовый 100 * ratio, но не меньше 20
-        local sizePx = math.clamp(100 * ratio, 20, 800)
-        bb.Size = UDim2.new(0, sizePx, 0, sizePx)
-        stroke.Color = GetIndicatorColor(self.SizeMultiplier)
-    end)
-    self.IndicatorConns[player] = conn
-end
-
-function HitboxExpander:RemoveIndicator(player)
-    if self.IndicatorConns[player] then
-        self.IndicatorConns[player]:Disconnect()
-        self.IndicatorConns[player] = nil
-    end
-    if self.Indicators[player] then
-        pcall(function() self.Indicators[player]:Destroy() end)
-        self.Indicators[player] = nil
-    end
-end
 
 function HitboxExpander:ExpandHead(player)
     if player == Player then return end
@@ -684,9 +601,6 @@ function HitboxExpander:ExpandHead(player)
     )
     head.CanCollide = false
     head.Massless = true
-
-    -- Создаём/обновляем круг-индикатор
-    self:CreateIndicator(player)
 end
 
 function HitboxExpander:RestoreHead(player)
@@ -699,7 +613,6 @@ function HitboxExpander:RestoreHead(player)
         head.Size = self.OriginalSizes[player]
         self.OriginalSizes[player] = nil
     end
-    self:RemoveIndicator(player)
 end
 
 function HitboxExpander:SetSize(multiplier)
@@ -756,13 +669,6 @@ function HitboxExpander:Disable()
     end
 
     self.OriginalSizes = {}
-
-    -- Убираем все индикаторы
-    for p, _ in pairs(self.Indicators) do
-        self:RemoveIndicator(p)
-    end
-    self.Indicators = {}
-    self.IndicatorConns = {}
 end
 
 -- ============ AIMBOT SYSTEM ============
@@ -963,8 +869,7 @@ Menu:CreateToggle(HitboxTab, 5, "Включить Hitbox", false, function(enabl
     end
 end)
 
--- Лимит слайдера снижен с 10 до 5 (анти-бан)
-Menu:CreateSlider(HitboxTab, 65, "Размер головы (макс 5)", 1, 5, 2.5, function(value)
+Menu:CreateSlider(HitboxTab, 65, "Размер головы", 1, 5, 2.5, function(value)
     HitboxExpander:SetSize(value)
 end)
 
