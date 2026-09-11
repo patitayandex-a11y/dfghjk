@@ -1,16 +1,24 @@
--- Меню с модульной системой + Анти-обнаружение + Аимбот + Hitbox Expander (только голова)
--- ИСПРАВЛЕНО: ESP через workspace, респавн-вотчеры, сброс хитбоксов по игроку, восстановление камеры
--- УБРАНО: фантомный круг-индикатор хитбокса
+-- NEXUS HUB
+-- ESP + Aimbot + Hitbox Expander
+-- Открытие: Insert | Паника: RightShift
 
 local Players = game:GetService("Players")
 local Player = Players.LocalPlayer
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
 
 local Menu = {
     Systems = {},
     Containers = {},
     Tabs = {},
+    Defaults = {
+        AimbotFOV = 60,
+        AimbotSmooth = 35,
+        AimbotKey = Enum.KeyCode.E,
+        HitboxSize = 2.5,
+        ESPColor = Color3.fromRGB(255, 0, 0),
+    },
 }
 
 -- ============ АНТИ-ОБНАРУЖЕНИЕ ============
@@ -36,12 +44,8 @@ function AntiDetect:RandomizeGuiName(gui)
     gui.Name = name
 end
 
-function AntiDetect:AntiAFK()
-    -- Отключено
-end
-
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "SimpleMenu"
+ScreenGui.Name = "NexusMenu"
 ScreenGui.Parent = Player:WaitForChild("PlayerGui")
 ScreenGui.ResetOnSpawn = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Global
@@ -49,7 +53,6 @@ ScreenGui.DisplayOrder = 999999
 
 AntiDetect:ProtectGui(ScreenGui)
 AntiDetect:RandomizeGuiName(ScreenGui)
-AntiDetect:AntiAFK()
 
 local MainFrame = Instance.new("Frame")
 MainFrame.Size = UDim2.new(0, 400, 0, 500)
@@ -58,12 +61,20 @@ MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
 MainFrame.BorderSizePixel = 0
 MainFrame.ZIndex = 999999
 MainFrame.Visible = false
+MainFrame.ClipsDescendants = true
 MainFrame.Parent = ScreenGui
 
 local UICorner = Instance.new("UICorner")
 UICorner.CornerRadius = UDim.new(0, 15)
 UICorner.Parent = MainFrame
 
+local MainStroke = Instance.new("UIStroke")
+MainStroke.Color = Color3.fromRGB(120, 140, 255)
+MainStroke.Transparency = 0.6
+MainStroke.Thickness = 1.5
+MainStroke.Parent = MainFrame
+
+-- ============ HEADER ============
 local Header = Instance.new("Frame")
 Header.Size = UDim2.new(1, 0, 0, 45)
 Header.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
@@ -83,14 +94,29 @@ HeaderFill.BorderSizePixel = 0
 HeaderFill.ZIndex = 1000000
 HeaderFill.Parent = Header
 
+local Logo = Instance.new("TextLabel")
+Logo.Size = UDim2.new(0, 28, 0, 28)
+Logo.Position = UDim2.new(0, 12, 0.5, -14)
+Logo.BackgroundColor3 = Color3.fromRGB(120, 140, 255)
+Logo.TextColor3 = Color3.fromRGB(255, 255, 255)
+Logo.Text = "✦"
+Logo.Font = Enum.Font.GothamBold
+Logo.TextSize = 16
+Logo.ZIndex = 1000002
+Logo.Parent = Header
+
+local LogoCorner = Instance.new("UICorner")
+LogoCorner.CornerRadius = UDim.new(0, 8)
+LogoCorner.Parent = Logo
+
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, -130, 1, 0)
-Title.Position = UDim2.new(0, 15, 0, 0)
+Title.Size = UDim2.new(1, -200, 1, 0)
+Title.Position = UDim2.new(0, 50, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "Меню"
-Title.TextColor3 = Color3.fromRGB(200, 200, 200)
+Title.Text = "NEXUS"
+Title.TextColor3 = Color3.fromRGB(230, 230, 240)
 Title.Font = Enum.Font.GothamBold
-Title.TextSize = 18
+Title.TextSize = 17
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.ZIndex = 1000001
 Title.Parent = Header
@@ -144,7 +170,49 @@ local function Rounded(parent, radius)
     return corner
 end
 
-function Menu:CreateTab(name)
+-- ============ WATERMARK ============
+local Watermark = Instance.new("Frame")
+Watermark.Size = UDim2.new(0, 180, 0, 26)
+Watermark.Position = UDim2.new(0, 15, 0, 15)
+Watermark.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+Watermark.BackgroundTransparency = 0.2
+Watermark.BorderSizePixel = 0
+Watermark.ZIndex = 999990
+Watermark.Parent = ScreenGui
+
+Rounded(Watermark, 8)
+
+local WmStroke = Instance.new("UIStroke")
+WmStroke.Color = Color3.fromRGB(120, 140, 255)
+WmStroke.Transparency = 0.5
+WmStroke.Thickness = 1
+WmStroke.Parent = Watermark
+
+local WmLogo = Instance.new("TextLabel")
+WmLogo.Size = UDim2.new(0, 20, 1, 0)
+WmLogo.Position = UDim2.new(0, 6, 0, 0)
+WmLogo.BackgroundTransparency = 1
+WmLogo.Text = "✦"
+WmLogo.TextColor3 = Color3.fromRGB(120, 140, 255)
+WmLogo.Font = Enum.Font.GothamBold
+WmLogo.TextSize = 13
+WmLogo.ZIndex = 999991
+WmLogo.Parent = Watermark
+
+local WmText = Instance.new("TextLabel")
+WmText.Size = UDim2.new(1, -30, 1, 0)
+WmText.Position = UDim2.new(0, 26, 0, 0)
+WmText.BackgroundTransparency = 1
+WmText.Text = "NEXUS | by " .. Player.Name
+WmText.TextColor3 = Color3.fromRGB(220, 220, 230)
+WmText.Font = Enum.Font.Gotham
+WmText.TextSize = 11
+WmText.TextXAlignment = Enum.TextXAlignment.Left
+WmText.ZIndex = 999991
+WmText.Parent = Watermark
+
+-- ============ MENU METHODS ============
+function Menu:CreateTab(name, icon)
     local container = Instance.new("ScrollingFrame")
     container.Size = UDim2.new(1, -30, 1, -105)
     container.Position = UDim2.new(0, 15, 0, 95)
@@ -154,7 +222,7 @@ function Menu:CreateTab(name)
     container.Parent = MainFrame
     container.ScrollingDirection = Enum.ScrollingDirection.Y
     container.ScrollBarThickness = 4
-    container.ScrollBarImageColor3 = Color3.fromRGB(80, 80, 90)
+    container.ScrollBarImageColor3 = Color3.fromRGB(120, 140, 255)
     container.CanvasSize = UDim2.new(0, 0, 0, 0)
     container.AutomaticCanvasSize = Enum.AutomaticSize.Y
     container.Visible = false
@@ -164,10 +232,10 @@ function Menu:CreateTab(name)
     tabBtn.Position = UDim2.new(#self.Tabs / math.max(#self.Tabs + 1, 1), 0, 0, 3)
     tabBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
     tabBtn.BorderSizePixel = 0
-    tabBtn.Text = name
+    tabBtn.Text = (icon and (icon .. "  ") or "") .. name
     tabBtn.TextColor3 = Color3.fromRGB(150, 150, 150)
     tabBtn.Font = Enum.Font.GothamBold
-    tabBtn.TextSize = 15
+    tabBtn.TextSize = 14
     tabBtn.AutoButtonColor = false
     tabBtn.ZIndex = 1000001
     tabBtn.Parent = TabPanel
@@ -184,7 +252,9 @@ function Menu:CreateTab(name)
             tab.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
             tab.TextColor3 = Color3.fromRGB(150, 150, 150)
         end
-        tabBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 80)
+        TweenService:Create(tabBtn, TweenInfo.new(0.15), {
+            BackgroundColor3 = Color3.fromRGB(70, 70, 80)
+        }):Play()
         tabBtn.TextColor3 = Color3.fromRGB(220, 220, 220)
     end)
 
@@ -244,7 +314,7 @@ function Menu:CreateToggle(container, yPos, labelText, default, callback)
     local knob = Instance.new("Frame")
     knob.Size = UDim2.new(0, 20, 0, 20)
     knob.Position = UDim2.new(0, default and 31 or 4, 0.5, -10)
-    knob.BackgroundColor3 = Color3.fromRGB(default and 255 or 150, default and 255 or 150, default and 255 or 150)
+    knob.BackgroundColor3 = default and Color3.fromRGB(255,255,255) or Color3.fromRGB(150,150,150)
     knob.BorderSizePixel = 0
     knob.ZIndex = 1000003
     knob.Parent = btn
@@ -260,13 +330,11 @@ function Menu:CreateToggle(container, yPos, labelText, default, callback)
     btn.MouseButton1Click:Connect(function()
         isEnabled = not isEnabled
         if isEnabled then
-            btn.BackgroundColor3 = Color3.fromRGB(80, 80, 90)
-            knob.Position = UDim2.new(0, 31, 0.5, -10)
-            knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(80, 80, 90)}):Play()
+            TweenService:Create(knob, TweenInfo.new(0.15), {Position = UDim2.new(0, 31, 0.5, -10), BackgroundColor3 = Color3.fromRGB(255, 255, 255)}):Play()
         else
-            btn.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
-            knob.Position = UDim2.new(0, 4, 0.5, -10)
-            knob.BackgroundColor3 = Color3.fromRGB(150, 150, 150)
+            TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(60, 60, 70)}):Play()
+            TweenService:Create(knob, TweenInfo.new(0.15), {Position = UDim2.new(0, 4, 0.5, -10), BackgroundColor3 = Color3.fromRGB(150, 150, 150)}):Play()
         end
         if callback then callback(isEnabled) end
     end)
@@ -318,7 +386,7 @@ function Menu:CreateSlider(container, yPos, labelText, min, max, default, callba
     local fill = Instance.new("Frame")
     local percent = (default - min) / (max - min)
     fill.Size = UDim2.new(percent, 0, 1, 0)
-    fill.BackgroundColor3 = Color3.fromRGB(180, 180, 180)
+    fill.BackgroundColor3 = Color3.fromRGB(120, 140, 255)
     fill.BorderSizePixel = 0
     fill.ZIndex = 1000004
     fill.Parent = bg
@@ -411,7 +479,7 @@ function Menu:CreateColorButton(container, yPos, labelText, colors, defaultColor
     btn.MouseButton1Click:Connect(function()
         colorIndex = colorIndex + 1
         if colorIndex > #colors then colorIndex = 1 end
-        btn.BackgroundColor3 = colors[colorIndex]
+        TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundColor3 = colors[colorIndex]}):Play()
         if callback then callback(colors[colorIndex]) end
     end)
 end
@@ -470,12 +538,47 @@ function Menu:CreateBindButton(container, yPos, labelText, defaultKey, callback)
     end)
 end
 
+function Menu:CreateButton(container, yPos, labelText, callback)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, 0, 0, 40)
+    btn.Position = UDim2.new(0, 0, 0, yPos)
+    btn.BackgroundColor3 = Color3.fromRGB(60, 60, 90)
+    btn.BorderSizePixel = 0
+    btn.Text = labelText
+    btn.TextColor3 = Color3.fromRGB(230, 230, 240)
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 14
+    btn.AutoButtonColor = false
+    btn.ZIndex = 1000001
+    btn.Parent = container
+
+    Rounded(btn, 12)
+
+    local btnStroke = Instance.new("UIStroke")
+    btnStroke.Color = Color3.fromRGB(120, 140, 255)
+    btnStroke.Transparency = 0.5
+    btnStroke.Thickness = 1
+    btnStroke.Parent = btn
+
+    btn.MouseEnter:Connect(function()
+        TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(80, 80, 120)}):Play()
+    end)
+
+    btn.MouseLeave:Connect(function()
+        TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(60, 60, 90)}):Play()
+    end)
+
+    btn.MouseButton1Click:Connect(function()
+        if callback then callback() end
+    end)
+end
+
 -- ============ ESP SYSTEM ============
 local ESP = {
     Enabled = false,
     Highlights = {},
     Connections = {},
-    Color = Color3.fromRGB(255, 0, 0),
+    Color = Menu.Defaults.ESPColor,
     CharacterWatchers = {},
 }
 
@@ -582,7 +685,7 @@ local HitboxExpander = {
     Enabled = false,
     OriginalSizes = {},
     Connections = {},
-    SizeMultiplier = 2.5,
+    SizeMultiplier = Menu.Defaults.HitboxSize,
 }
 
 function HitboxExpander:ExpandHead(player)
@@ -674,11 +777,11 @@ end
 -- ============ AIMBOT SYSTEM ============
 local Aimbot = {
     Enabled = false,
-    FOV = 60,
+    FOV = Menu.Defaults.AimbotFOV,
     FOVCircle = nil,
     Connection = nil,
-    Smoothness = 35,
-    AimKey = Enum.KeyCode.E,
+    Smoothness = Menu.Defaults.AimbotSmooth,
+    AimKey = Menu.Defaults.AimbotKey,
     _savedCamType = nil,
     _savedCamSubject = nil,
 }
@@ -774,7 +877,7 @@ function Aimbot:CreateFOVCircle()
     Rounded(circle, radius)
 
     local stroke = Instance.new("UIStroke")
-    stroke.Color = Color3.fromRGB(255, 255, 255)
+    stroke.Color = Color3.fromRGB(120, 140, 255)
     stroke.Thickness = 1
     stroke.Transparency = 0.3
     stroke.Parent = circle
@@ -825,7 +928,7 @@ end
 
 -- ============ РЕГИСТРАЦИЯ ВКЛАДОК ============
 
-local ESPTab = Menu:CreateTab("ESP")
+local ESPTab = Menu:CreateTab("ESP", "👁")
 Menu:CreateToggle(ESPTab, 5, "Включить ESP", false, function(enabled)
     if enabled then ESP:Enable() else ESP:Disable() end
 end)
@@ -835,13 +938,15 @@ local colors = {
     Color3.fromRGB(0, 0, 255),
     Color3.fromRGB(0, 255, 0),
     Color3.fromRGB(255, 255, 0),
+    Color3.fromRGB(255, 0, 255),
+    Color3.fromRGB(0, 255, 255),
 }
 
 Menu:CreateColorButton(ESPTab, 65, "Цвет ESP", colors, colors[1], function(color)
     ESP:SetColor(color)
 end)
 
-local AimbotTab = Menu:CreateTab("AIMBOT")
+local AimbotTab = Menu:CreateTab("AIMBOT", "🎯")
 Menu:CreateToggle(AimbotTab, 5, "Включить Aimbot", false, function(enabled)
     if enabled then Aimbot:Enable() else Aimbot:Disable() end
 end)
@@ -860,7 +965,7 @@ Menu:CreateSlider(AimbotTab, 200, "Скорость", 1, 100, 35, function(value
     Aimbot.Smoothness = value
 end)
 
-local HitboxTab = Menu:CreateTab("HITBOX")
+local HitboxTab = Menu:CreateTab("HITBOX", "📦")
 Menu:CreateToggle(HitboxTab, 5, "Включить Hitbox", false, function(enabled)
     if enabled then
         HitboxExpander:Enable()
@@ -873,6 +978,54 @@ Menu:CreateSlider(HitboxTab, 65, "Размер головы", 1, 5, 2.5, functio
     HitboxExpander:SetSize(value)
 end)
 
+local SettingsTab = Menu:CreateTab("SETTINGS", "⚙")
+Menu:CreateButton(SettingsTab, 5, "🔄  Reset All Settings", function()
+    -- Сброс Aimbot
+    Aimbot.FOV = Menu.Defaults.AimbotFOV
+    Aimbot.Smoothness = Menu.Defaults.AimbotSmooth
+    Aimbot.AimKey = Menu.Defaults.AimbotKey
+    if Aimbot.Enabled then Aimbot:CreateFOVCircle() end
+    -- Сброс Hitbox
+    HitboxExpander:SetSize(Menu.Defaults.HitboxSize)
+    -- Сброс ESP цвета
+    ESP:SetColor(Menu.Defaults.ESPColor)
+    print("✅ Настройки сброшены к дефолту")
+end)
+
+Menu:CreateButton(SettingsTab, 55, "🚨  Panic (вырубить всё)", function()
+    pcall(function() ESP:Disable() end)
+    pcall(function() Aimbot:Disable() end)
+    pcall(function() HitboxExpander:Disable() end)
+    print("🚨 Panic: всё выключено")
+end)
+
+-- ============ ПЛАВНОЕ ОТКРЫТИЕ/ЗАКРЫТИЕ ============
+
+local isOpen = false
+
+local function OpenMenu()
+    if isOpen then return end
+    isOpen = true
+    MainFrame.Visible = true
+    MainFrame.Size = UDim2.new(0, 400, 0, 0)
+    MainFrame.Position = UDim2.new(0.5, -200, 0.5, -250)
+    TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quint), {
+        Size = UDim2.new(0, 400, 0, 500)
+    }):Play()
+end
+
+local function CloseMenu()
+    if not isOpen then return end
+    isOpen = false
+    local tween = TweenService:Create(MainFrame, TweenInfo.new(0.2, Enum.EasingStyle.Quint), {
+        Size = UDim2.new(0, 400, 0, 0)
+    })
+    tween:Play()
+    tween.Completed:Connect(function()
+        MainFrame.Visible = false
+    end)
+end
+
 -- ============ ОБРАБОТЧИКИ КНОПОК ============
 
 KillButton.MouseButton1Click:Connect(function()
@@ -883,8 +1036,24 @@ KillButton.MouseButton1Click:Connect(function()
     print("Меню уничтожено")
 end)
 
+KillButton.MouseEnter:Connect(function()
+    TweenService:Create(KillButton, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(180, 60, 60)}):Play()
+end)
+
+KillButton.MouseLeave:Connect(function()
+    TweenService:Create(KillButton, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(120, 40, 40)}):Play()
+end)
+
 CloseButton.MouseButton1Click:Connect(function()
-    MainFrame.Visible = false
+    CloseMenu()
+end)
+
+CloseButton.MouseEnter:Connect(function()
+    TweenService:Create(CloseButton, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(150, 60, 60)}):Play()
+end)
+
+CloseButton.MouseLeave:Connect(function()
+    TweenService:Create(CloseButton, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(50, 50, 55)}):Play()
 end)
 
 -- ============ ПЕРЕТАСКИВАНИЕ ОКНА ============
@@ -922,15 +1091,25 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- ============ ОТКРЫТИЕ ПО INSERT ============
+-- ============ ХОТКЕИ ============
 
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
+
+    -- Insert → открыть/закрыть
     if input.KeyCode == Enum.KeyCode.Insert then
-        if ScreenGui and ScreenGui.Parent then
-            MainFrame.Visible = not MainFrame.Visible
-        end
+        if isOpen then CloseMenu() else OpenMenu() end
+    end
+
+    -- RightShift → паника (вырубить всё)
+    if input.KeyCode == Enum.KeyCode.RightShift then
+        pcall(function() ESP:Disable() end)
+        pcall(function() Aimbot:Disable() end)
+        pcall(function() HitboxExpander:Disable() end)
+        print("🚨 PANIC (RightShift): всё выключено")
     end
 end)
 
-print("Меню готово! Нажми Insert")
+print("✦ NEXUS HUB загружен!")
+print("📌 Insert — открыть/закрыть меню")
+print("🚨 RightShift — паника (вырубить все читы)")
