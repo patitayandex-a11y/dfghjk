@@ -170,9 +170,9 @@ local function Rounded(parent, radius)
     return corner
 end
 
--- ============ WATERMARK ============
+-- ============ WATERMARK + FPS/PING ============
 local Watermark = Instance.new("Frame")
-Watermark.Size = UDim2.new(0, 180, 0, 26)
+Watermark.Size = UDim2.new(0, 260, 0, 26)
 Watermark.Position = UDim2.new(0, 15, 0, 15)
 Watermark.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
 Watermark.BackgroundTransparency = 0.2
@@ -188,20 +188,9 @@ WmStroke.Transparency = 0.5
 WmStroke.Thickness = 1
 WmStroke.Parent = Watermark
 
-local WmLogo = Instance.new("TextLabel")
-WmLogo.Size = UDim2.new(0, 20, 1, 0)
-WmLogo.Position = UDim2.new(0, 6, 0, 0)
-WmLogo.BackgroundTransparency = 1
-WmLogo.Text = "✦"
-WmLogo.TextColor3 = Color3.fromRGB(120, 140, 255)
-WmLogo.Font = Enum.Font.GothamBold
-WmLogo.TextSize = 13
-WmLogo.ZIndex = 999991
-WmLogo.Parent = Watermark
-
 local WmText = Instance.new("TextLabel")
-WmText.Size = UDim2.new(1, -30, 1, 0)
-WmText.Position = UDim2.new(0, 26, 0, 0)
+WmText.Size = UDim2.new(1, -12, 1, 0)
+WmText.Position = UDim2.new(0, 6, 0, 0)
 WmText.BackgroundTransparency = 1
 WmText.Text = "NEXUS | by " .. Player.Name
 WmText.TextColor3 = Color3.fromRGB(220, 220, 230)
@@ -210,6 +199,45 @@ WmText.TextSize = 11
 WmText.TextXAlignment = Enum.TextXAlignment.Left
 WmText.ZIndex = 999991
 WmText.Parent = Watermark
+
+-- FPS / Ping счётчик
+local Stats = Instance.new("TextLabel")
+Stats.Size = UDim2.new(0, 90, 1, 0)
+Stats.Position = UDim2.new(1, -95, 0, 0)
+Stats.BackgroundTransparency = 1
+Stats.Text = "FPS: 0 | 0ms"
+Stats.TextColor3 = Color3.fromRGB(120, 200, 255)
+Stats.Font = Enum.Font.GothamBold
+Stats.TextSize = 11
+Stats.TextXAlignment = Enum.TextXAlignment.Right
+Stats.ZIndex = 999991
+Stats.Parent = Watermark
+
+-- Подсчёт FPS
+local fpsCount = 0
+local fpsTime = tick()
+local currentFPS = 0
+
+RunService.RenderStepped:Connect(function()
+    fpsCount = fpsCount + 1
+    if tick() - fpsTime >= 1 then
+        currentFPS = fpsCount
+        fpsCount = 0
+        fpsTime = tick()
+    end
+end)
+
+-- Обновление Stats раз в 0.5 сек
+task.spawn(function()
+    while Watermark and Watermark.Parent do
+        local ping = 0
+        pcall(function()
+            ping = math.floor(Player:GetNetworkPing() * 1000)
+        end)
+        Stats.Text = "FPS: " .. currentFPS .. " | " .. ping .. "ms"
+        task.wait(0.5)
+    end
+end)
 
 -- ============ MENU METHODS ============
 function Menu:CreateTab(name, icon)
@@ -946,7 +974,7 @@ Menu:CreateColorButton(ESPTab, 65, "Цвет ESP", colors, colors[1], function(c
     ESP:SetColor(color)
 end)
 
-local AimbotTab = Menu:CreateTab("AIMBOT", "🎯")
+local AimbotTab = Menu:CreateTab("AIMBOT", "")
 Menu:CreateToggle(AimbotTab, 5, "Включить Aimbot", false, function(enabled)
     if enabled then Aimbot:Enable() else Aimbot:Disable() end
 end)
@@ -965,7 +993,7 @@ Menu:CreateSlider(AimbotTab, 200, "Скорость", 1, 100, 35, function(value
     Aimbot.Smoothness = value
 end)
 
-local HitboxTab = Menu:CreateTab("HITBOX", "📦")
+local HitboxTab = Menu:CreateTab("HITBOX", "")
 Menu:CreateToggle(HitboxTab, 5, "Включить Hitbox", false, function(enabled)
     if enabled then
         HitboxExpander:Enable()
@@ -979,7 +1007,7 @@ Menu:CreateSlider(HitboxTab, 65, "Размер головы", 1, 5, 2.5, functio
 end)
 
 local SettingsTab = Menu:CreateTab("SETTINGS", "⚙")
-Menu:CreateButton(SettingsTab, 5, "🔄  Reset All Settings", function()
+Menu:CreateButton(SettingsTab, 5, "  Reset All Settings", function()
     -- Сброс Aimbot
     Aimbot.FOV = Menu.Defaults.AimbotFOV
     Aimbot.Smoothness = Menu.Defaults.AimbotSmooth
@@ -989,14 +1017,14 @@ Menu:CreateButton(SettingsTab, 5, "🔄  Reset All Settings", function()
     HitboxExpander:SetSize(Menu.Defaults.HitboxSize)
     -- Сброс ESP цвета
     ESP:SetColor(Menu.Defaults.ESPColor)
-    print("✅ Настройки сброшены к дефолту")
+    print(" Настройки сброшены к дефолту")
 end)
 
-Menu:CreateButton(SettingsTab, 55, "🚨  Panic (вырубить всё)", function()
+Menu:CreateButton(SettingsTab, 55, "  Panic (вырубить всё)", function()
     pcall(function() ESP:Disable() end)
     pcall(function() Aimbot:Disable() end)
     pcall(function() HitboxExpander:Disable() end)
-    print("🚨 Panic: всё выключено")
+    print(" Panic: всё выключено")
 end)
 
 -- ============ ПЛАВНОЕ ОТКРЫТИЕ/ЗАКРЫТИЕ ============
@@ -1106,10 +1134,10 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
         pcall(function() ESP:Disable() end)
         pcall(function() Aimbot:Disable() end)
         pcall(function() HitboxExpander:Disable() end)
-        print("🚨 PANIC (RightShift): всё выключено")
+        print(" PANIC (RightShift): всё выключено")
     end
 end)
 
-print("✦ NEXUS HUB загружен!")
-print("📌 Insert — открыть/закрыть меню")
-print("🚨 RightShift — паника (вырубить все читы)")
+print(" NEXUS HUB загружен!")
+print(" Insert — открыть/закрыть меню")
+print(" RightShift — паника (вырубить все читы)")
